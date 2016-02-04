@@ -17,7 +17,20 @@ const (
     XmlPartCharData = iota
 )
 
-type XmlVisitor interface {
+type SimpleXmlVisitor interface {
+    // The content identifier next to the left angle brack.
+    HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error
+    
+    // The content identifier next to the left angle brack.
+    HandleEnd(tagName *string, xp *XmlParser) error
+    
+    // Content that comes before one open/close tag and an adjacent one: either 
+    // the useless whitespace between two open adjacent tags or two close 
+    // adjacent tags or a tangible/empty value between an open and close tag.
+    HandleCharData(data *string, xp *XmlParser) error
+}
+
+type ExtendedXmlVisitor interface {
     // The content identifier next to the left angle brack.
     HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error
     
@@ -47,6 +60,8 @@ type XmlVisitor interface {
     // <![CDATA[Some text here.]]>
     HandleDirective(directive *string, xp *XmlParser) error
 }
+
+type XmlVisitor interface{}
 
 type XmlParser struct {
     f *os.File
@@ -127,7 +142,8 @@ func (xp *XmlParser) Parse() (err error) {
                 attributes[a.Name.Local] = a.Value
             }
 
-            err := xp.v.HandleStart(&name, &attributes, xp)
+            sxv := xp.v.(SimpleXmlVisitor)
+            err := sxv.HandleStart(&name, &attributes, xp)
             if err != nil {
                 panic(err)
             }
@@ -139,7 +155,8 @@ func (xp *XmlParser) Parse() (err error) {
 
             name := e.Name.Local
 
-            err := xp.v.HandleEnd(&name, xp)
+            sxv := xp.v.(SimpleXmlVisitor)
+            err := sxv.HandleEnd(&name, xp)
             if err != nil {
                 panic(err)
             }
@@ -150,7 +167,8 @@ func (xp *XmlParser) Parse() (err error) {
             // The underlying/aliased type is byte[].
             s := strings.TrimSpace(string(e))
 
-            err := xp.v.HandleCharData(&s, xp)
+            sxv := xp.v.(SimpleXmlVisitor)
+            err := sxv.HandleCharData(&s, xp)
             if err != nil {
                 panic(err)
             }
@@ -161,25 +179,35 @@ func (xp *XmlParser) Parse() (err error) {
             // The underlying/aliased type is byte[].
             s := string(e)
 
-            err := xp.v.HandleComment(&s, xp)
-            if err != nil {
-                panic(err)
+            exv, ok := xp.v.(ExtendedXmlVisitor)
+            if ok == true {
+                err := exv.HandleComment(&s, xp)
+                if err != nil {
+                    panic(err)
+                }
             }
 
         case xml.ProcInst:
             instruction := string(e.Inst)
-            err := xp.v.HandleProcessingInstruction(&e.Target, &instruction, xp)
-            if err != nil {
-                panic(err)
+
+            exv, ok := xp.v.(ExtendedXmlVisitor)
+            if ok == true {
+                err := exv.HandleProcessingInstruction(&e.Target, &instruction, xp)
+                if err != nil {
+                    panic(err)
+                }
             }
 
         case xml.Directive:
             // The underlying/aliased type is byte[].
             s := string(e)
 
-            err := xp.v.HandleDirective(&s, xp)
-            if err != nil {
-                panic(err)
+            exv, ok := xp.v.(ExtendedXmlVisitor)
+            if ok == true {
+                err := exv.HandleDirective(&s, xp)
+                if err != nil {
+                    panic(err)
+                }
             }
         }
     }

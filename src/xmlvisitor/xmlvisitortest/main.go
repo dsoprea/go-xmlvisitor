@@ -34,6 +34,7 @@ func (xv *xmlVisitor) HandleCharData(data *string, xp *xmlvisitor.XmlParser) err
     return nil
 }
 
+/*
 func (xv *xmlVisitor) HandleComment(comment *string, xp *xmlvisitor.XmlParser) error {
     fmt.Printf("Comment: [%s]\n", *comment)
 
@@ -51,6 +52,7 @@ func (xv *xmlVisitor) HandleDirective(directive *string, xp *xmlvisitor.XmlParse
 
     return nil
 }
+*/
 
 func newXmlVisitor() (*xmlVisitor) {
     return &xmlVisitor {}
