@@ -72,7 +72,13 @@ func readOptions () *options {
 }
 
 func getTextReader() io.Reader {
-    s := "<node1><node2><node3></node3><node4></node4></node2></node1>"
+    s := `<node1>
+    <node2>
+        <node3>node3 value</node3>
+        <node4>node4 value</node4>
+    </node2>
+</node1>`
+
     r := strings.NewReader(s)
 
     return r
