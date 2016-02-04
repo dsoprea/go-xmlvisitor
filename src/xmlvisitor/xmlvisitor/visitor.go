@@ -69,10 +69,20 @@ type XmlParser struct {
     ns *Stack
     v XmlVisitor
     lastState int
+    doReportMarginCharData bool
+    doAutoTrimCharData bool
 }
 
 func (xp *XmlParser) NodeStack() *Stack {
     return xp.ns
+}
+
+func (xp *XmlParser) SetDoReportMarginCharData(value bool) {
+    xp.doReportMarginCharData = value
+}
+
+func (xp *XmlParser) SetDoAutoTrimCharData(value bool) {
+    xp.doAutoTrimCharData = value
 }
 
 // Create parser.
@@ -91,6 +101,8 @@ func NewXmlParser(filepath *string, visitor XmlVisitor) *XmlParser {
             ns: ns,
             v: visitor,
             lastState: XmlPart_Initial,
+            doReportMarginCharData: false,
+            doAutoTrimCharData: true,
     }
 }
 
@@ -164,13 +176,24 @@ func (xp *XmlParser) Parse() (err error) {
             xp.lastState = XmlPartEndTag
 
         case xml.CharData:
-            // The underlying/aliased type is byte[].
-            s := strings.TrimSpace(string(e))
+            var autotrim bool = xp.doAutoTrimCharData
+            var reportMargin bool = xp.doReportMarginCharData
 
-            sxv := xp.v.(SimpleXmlVisitor)
-            err := sxv.HandleCharData(&s, xp)
-            if err != nil {
-                panic(err)
+            // The underlying/aliased type is byte[].
+            s := string(e)
+            
+            if autotrim == true {
+                s = strings.TrimSpace(s)
+            }
+
+            // If this is a value between an open and a close tag or it 
+            // followed a close tag and we were told to trigger on it.
+            if xp.lastState != XmlPartEndTag || reportMargin == true {
+                sxv := xp.v.(SimpleXmlVisitor)
+                err := sxv.HandleCharData(&s, xp)
+                if err != nil {
+                    panic(err)
+                }
             }
 
             xp.lastState = XmlPartCharData
