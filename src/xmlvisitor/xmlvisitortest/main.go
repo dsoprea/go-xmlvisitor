@@ -3,6 +3,8 @@ package main
 import (
     "os"
     "fmt"
+    "strings"
+    "io"
 
     "xmlvisitor/xmlvisitor"
 
@@ -69,17 +71,40 @@ func readOptions () *options {
     return &o
 }
 
-func main() {
+func getTextReader() io.Reader {
+    s := "<node1><node2><node3></node3><node4></node4></node2></node1>"
+    r := strings.NewReader(s)
+
+    return r
+}
+
+func getFileReader() io.Reader {
     var xmlFilepath string
 
     o := readOptions()
-
     xmlFilepath = o.XmlFilepath
 
-    v := newXmlVisitor()
-    p := xmlvisitor.NewXmlParser(&xmlFilepath, v)
+    f, err := os.Open(xmlFilepath)
+    if err != nil {
+        panic(err)
+    }
 
-    defer p.Close()
+    return f
+}
+
+func closeFileReader(f os.File) {
+    f.Close()
+}
+
+func main() {
+//    r := getTextReader()
+
+    r := getFileReader()
+    f := r.(*os.File)
+    defer closeFileReader(*f)
+
+    v := newXmlVisitor()
+    p := xmlvisitor.NewXmlParser(r, v)
 
     err := p.Parse()
     if err != nil {

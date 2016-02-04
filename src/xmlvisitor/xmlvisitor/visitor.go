@@ -3,9 +3,9 @@
 package xmlvisitor
 
 import (
-    "os"
     "strings"
     "errors"
+    "io"
 
     "encoding/xml"
 )
@@ -67,7 +67,6 @@ type ExtendedXmlVisitor interface {
 type XmlVisitor interface{}
 
 type XmlParser struct {
-    f *os.File
     decoder *xml.Decoder
     ns *Stack
     v XmlVisitor
@@ -110,17 +109,11 @@ func (xp *XmlParser) SetDoAutoTrimCharData(value bool) {
 }
 
 // Create parser.
-func NewXmlParser(filepath *string, visitor XmlVisitor) *XmlParser {
-    f, err := os.Open(*filepath)
-    if err != nil {
-        panic(err)
-    }
-
-    decoder := xml.NewDecoder(f)
+func NewXmlParser(r io.Reader, visitor XmlVisitor) *XmlParser {
+    decoder := xml.NewDecoder(r)
     ns := newStack()
 
     return &XmlParser {
-            f: f,
             decoder: decoder,
             ns: ns,
             v: visitor,
@@ -147,11 +140,6 @@ func (xp *XmlParser) LastStateName() string {
     } else {
         panic(errors.New("Invalid XML state."))
     }
-}
-
-// Close resources.
-func (xp *XmlParser) Close() {
-    xp.f.Close()
 }
 
 // Run the parse with a minimal memory footprint.
