@@ -1,6 +1,6 @@
 ## Introduction
 
-This library allows for easy traversal of XML using the visitor pattern. 
+This library allows for efficient traversal of XML using the visitor pattern within Go. It also tracks state in order to provide some convenience functions.
 
 ## Usage
 
@@ -71,9 +71,27 @@ Implement an interface and pass a reader resource along with an instance of your
   values that we derive from character data (received by HandleValue()).
 
 
+## Other Conveniences
+
+The visitor callbacks will have an instance of the XmlParser passed-in as an argument. This can be used to access additional functionality.
+
+### Last Node State
+
+Calling `GetLastState()` on the XmlParser object will return the last [useful] type of token that was encountered. It will be equal to one of the *XmlPart* constants:
+
+- `xmlvisitor.XmlPartStartTag`
+- `xmlvisitor.XmlPartEndTag`
+- `xmlvisitor.XmlPartCharData`
+
+
+### Stack
+
+The visitor callbacks have access to the current stack of nodes using `NodeStack()`. This returns an instance of the *Stack* type. See [stack.go](src/gpxreader/gpxreader/stack.go) for further detail.
+
+
 ## Notes
 
-- There is no specific handling of namespaces. This is left as an exercise to the implementor. This library merely provides simplified handling of the basic tokenizer.
+- There is no specific handling of namespaces. This is left as an exercise to the implementor. This library merely provides a simplification of the low-level tokenizer.
 
 
 ## Example
