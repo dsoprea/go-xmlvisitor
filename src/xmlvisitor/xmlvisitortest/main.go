@@ -24,12 +24,8 @@ func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error
     return nil
 }
 
-func (xv *xmlVisitor) HandleCharData(data *string, xp *xmlvisitor.XmlParser) error {
-    if xp.LastState() != xmlvisitor.XmlPartStartTag {
-        return nil
-    }
-
-    fmt.Printf("CharData: [%s]\n", *data)
+func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor.XmlParser) error {
+    fmt.Printf("Value: [%s] [%s]\n", *tagName, *value)
 
     return nil
 }

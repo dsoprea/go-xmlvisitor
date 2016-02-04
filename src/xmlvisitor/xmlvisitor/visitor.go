@@ -24,10 +24,9 @@ type SimpleXmlVisitor interface {
     // The content identifier next to the left angle brack.
     HandleEnd(tagName *string, xp *XmlParser) error
     
-    // Content that comes before one open/close tag and an adjacent one: either 
-    // the useless whitespace between two open adjacent tags or two close 
-    // adjacent tags or a tangible/empty value between an open and close tag.
-    HandleCharData(data *string, xp *XmlParser) error
+    // Return the value that was found between two tags not having any child 
+    // nodes.
+    HandleValue(tagName *string, data *string, xp *XmlParser) error
 }
 
 type ExtendedXmlVisitor interface {
@@ -36,6 +35,10 @@ type ExtendedXmlVisitor interface {
     
     // The content identifier next to the left angle brack.
     HandleEnd(tagName *string, xp *XmlParser) error
+
+    // Return the value that was found between two tags not having any child 
+    // nodes.
+    HandleValue(tagName *string, data *string, xp *XmlParser) error
     
     // Content that comes before one open/close tag and an adjacent one: either 
     // the useless whitespace between two open adjacent tags or two close 
@@ -68,9 +71,30 @@ type XmlParser struct {
     decoder *xml.Decoder
     ns *Stack
     v XmlVisitor
-    lastState int
+    
+    // The state preceding the last state.
+    lastState2 int
+    
+    // The last state.
+    lastState1 int
+
+    lastCharData string
+    
     doReportMarginCharData bool
     doAutoTrimCharData bool
+}
+
+func (xp *XmlParser) PushLastState(lastState int) {
+    xp.lastState2 = xp.lastState1
+    xp.lastState1 = lastState
+}
+
+func (xp *XmlParser) GetLastState() int {
+    return xp.lastState1
+}
+
+func (xp *XmlParser) GetLastLastState() int {
+    return xp.lastState2
 }
 
 func (xp *XmlParser) NodeStack() *Stack {
@@ -100,24 +124,25 @@ func NewXmlParser(filepath *string, visitor XmlVisitor) *XmlParser {
             decoder: decoder,
             ns: ns,
             v: visitor,
-            lastState: XmlPart_Initial,
+            lastState1: XmlPart_Initial,
+            lastState2: XmlPart_Initial,
             doReportMarginCharData: false,
             doAutoTrimCharData: true,
     }
 }
 
 func (xp *XmlParser) LastState() int {
-    return xp.lastState
+    return xp.lastState1
 }
 
 func (xp *XmlParser) LastStateName() string {
-    if xp.lastState == XmlPart_Initial {
+    if xp.lastState1 == XmlPart_Initial {
         return ""
-    } else if xp.lastState == XmlPartStartTag {
+    } else if xp.lastState1 == XmlPartStartTag {
         return "StartTag"
-    } else if xp.lastState == XmlPartEndTag {
+    } else if xp.lastState1 == XmlPartEndTag {
         return "EndTag"
-    } else if xp.lastState == XmlPartCharData {
+    } else if xp.lastState1 == XmlPartCharData {
         return "CharData"
     } else {
         panic(errors.New("Invalid XML state."))
@@ -160,7 +185,7 @@ func (xp *XmlParser) Parse() (err error) {
                 panic(err)
             }
 
-            xp.lastState = XmlPartStartTag
+            xp.PushLastState(XmlPartStartTag)
 
         case xml.EndElement:
             xp.ns.pop()
@@ -173,30 +198,36 @@ func (xp *XmlParser) Parse() (err error) {
                 panic(err)
             }
 
-            xp.lastState = XmlPartEndTag
+            if xp.lastState1 == XmlPartCharData && xp.lastState2 == XmlPartStartTag {
+                sxv.HandleValue(&name, &xp.lastCharData, xp)
+            }
+
+            xp.PushLastState(XmlPartEndTag)
 
         case xml.CharData:
-            var autotrim bool = xp.doAutoTrimCharData
-            var reportMargin bool = xp.doReportMarginCharData
-
             // The underlying/aliased type is byte[].
             s := string(e)
             
-            if autotrim == true {
+            if xp.doAutoTrimCharData == true {
                 s = strings.TrimSpace(s)
             }
 
-            // If this is a value between an open and a close tag or it 
-            // followed a close tag and we were told to trigger on it.
-            if xp.lastState != XmlPartEndTag || reportMargin == true {
-                sxv := xp.v.(SimpleXmlVisitor)
-                err := sxv.HandleCharData(&s, xp)
-                if err != nil {
-                    panic(err)
+            // We'll be reporting values found between open and close tags in 
+            // the tag-end case. Therefore, this will be exclusively 
+            // responsible for reporting the data between adjacent open tags or 
+            // adjacent close tags.
+            if xp.doReportMarginCharData == true {
+                sxv, ok := xp.v.(ExtendedXmlVisitor)
+                if ok == true {
+                    err := sxv.HandleCharData(&s, xp)
+                    if err != nil {
+                        panic(err)
+                    }
                 }
             }
 
-            xp.lastState = XmlPartCharData
+            xp.lastCharData = s
+            xp.PushLastState(XmlPartCharData)
 
         case xml.Comment:
             // The underlying/aliased type is byte[].
