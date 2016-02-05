@@ -105,7 +105,7 @@ import (
     "strings"
     "io"
 
-    "xmlvisitor/xmlvisitor"
+    "github.com/dsoprea/go-xmlvisitor"
 )
 
 type xmlVisitor struct {
