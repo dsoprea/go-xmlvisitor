@@ -1,1 +1,3 @@
-/build
+/build/bin/
+/build/pkg/
+/build/src/github.com/dsoprea/go-xmlvisitor/

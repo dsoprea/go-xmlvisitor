@@ -1,28 +1,25 @@
 #!/bin/bash
 
 export GOPATH=${PWD}/build
-echo "export GOPATH=${PWD}/build"
 
-WORKSPACE_PATH="$GOPATH/src"
-
+WORKSPACE_PATH="$GOPATH"
 REL_PROJECT_PATH="github.com/dsoprea/go-xmlvisitor"
-PROJECT_PATH="$WORKSPACE_PATH/${REL_PROJECT_PATH}"
+PROJECT_PATH="$WORKSPACE_PATH/src/$REL_PROJECT_PATH"
 
 rm -fr $PROJECT_PATH/xmlvisitor
 rm -fr $PROJECT_PATH/commands/xmlvisitortest
 
 mkdir -p $PROJECT_PATH
 cp -r xmlvisitor $PROJECT_PATH
-echo "cp -r xmlvisitor $PROJECT_PATH"
 cp -r commands $PROJECT_PATH
-echo "cp -r commands $PROJECT_PATH"
 
-go get ${REL_PROJECT_PATH}/commands/xmlvisitortest
-echo "${REL_PROJECT_PATH}/commands/xmlvisitortest"
+go get $REL_PROJECT_PATH/commands/xmlvisitortest
 if [ $? -ne 0 ]; then
     echo "Get failed."
     exit 1
 fi
 
-go build -o ${WORKSPACE_PATH}/bin ${REL_PROJECT_PATH}/commands/xmlvisitortest
-echo "go build -o ${WORKSPACE_PATH}/bin ${REL_PROJECT_PATH}/commands/xmlvisitortest"
+BIN_OUTPUT_PATH=$WORKSPACE_PATH/bin
+mkdir -p $BIN_OUTPUT_PATH
+
+go build -o $BIN_OUTPUT_PATH/xmlvisitortest $REL_PROJECT_PATH/commands/xmlvisitortest
