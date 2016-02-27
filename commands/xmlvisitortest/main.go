@@ -6,7 +6,7 @@ import (
     "strings"
     "io"
 
-    "github.com/dsoprea/go-xmlvisitor"
+    "github.com/dsoprea/go-xmlvisitor/xmlvisitor"
     flags "github.com/jessevdk/go-flags"
 )
 
