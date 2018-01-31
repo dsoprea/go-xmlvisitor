@@ -19,41 +19,31 @@ const (
 
 type SimpleXmlVisitor interface {
     // The content identifier next to the left angle brack.
-    HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error
+    HandleStart(tagName string, attrp map[string]string, xp *XmlParser) error
 
     // The content identifier next to the left angle brack.
-    HandleEnd(tagName *string, xp *XmlParser) error
+    HandleEnd(tagName string, xp *XmlParser) error
 
     // Return the value that was found between two tags not having any child
     // nodes.
-    HandleValue(tagName *string, data *string, xp *XmlParser) error
+    HandleValue(tagName string, data string, xp *XmlParser) error
 }
 
 type ExtendedXmlVisitor interface {
-    // The content identifier next to the left angle brack.
-    HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error
-
-    // The content identifier next to the left angle brack.
-    HandleEnd(tagName *string, xp *XmlParser) error
-
-    // Return the value that was found between two tags not having any child
-    // nodes.
-    HandleValue(tagName *string, data *string, xp *XmlParser) error
-
     // Content that comes before one open/close tag and an adjacent one: either
     // the useless whitespace between two open adjacent tags or two close
     // adjacent tags or a tangible/empty value between an open and close tag.
-    HandleCharData(data *string, xp *XmlParser) error
+    HandleCharData(data string, xp *XmlParser) error
 
     // Example:
     //
     // <!-- Comment -->
-    HandleComment(comment *string, xp *XmlParser) error
+    HandleComment(comment string, xp *XmlParser) error
 
     // Example:
     //
     // <?xml version="1.0" encoding="UTF-8"?>
-    HandleProcessingInstruction(target *string, instruction *string, xp *XmlParser) error
+    HandleProcessingInstruction(target string, instruction string, xp *XmlParser) error
 
     // Example:
     //
@@ -61,7 +51,9 @@ type ExtendedXmlVisitor interface {
     //   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     //
     // <![CDATA[Some text here.]]>
-    HandleDirective(directive *string, xp *XmlParser) error
+    HandleDirective(directive string, xp *XmlParser) error
+
+    SimpleXmlVisitor
 }
 
 type XmlVisitor interface{}
@@ -168,7 +160,7 @@ func (xp *XmlParser) Parse() (err error) {
             }
 
             sxv := xp.v.(SimpleXmlVisitor)
-            err := sxv.HandleStart(&name, &attributes, xp)
+            err := sxv.HandleStart(name, attributes, xp)
             if err != nil {
                 panic(err)
             }
@@ -181,13 +173,13 @@ func (xp *XmlParser) Parse() (err error) {
             name := e.Name.Local
 
             sxv := xp.v.(SimpleXmlVisitor)
-            err := sxv.HandleEnd(&name, xp)
+            err := sxv.HandleEnd(name, xp)
             if err != nil {
                 panic(err)
             }
 
             if xp.lastState1 == XmlPartCharData && xp.lastState2 == XmlPartStartTag {
-                sxv.HandleValue(&name, &xp.lastCharData, xp)
+                sxv.HandleValue(name, xp.lastCharData, xp)
             }
 
             xp.PushLastState(XmlPartEndTag)
@@ -207,7 +199,7 @@ func (xp *XmlParser) Parse() (err error) {
             if xp.doReportMarginCharData == true {
                 sxv, ok := xp.v.(ExtendedXmlVisitor)
                 if ok == true {
-                    err := sxv.HandleCharData(&s, xp)
+                    err := sxv.HandleCharData(s, xp)
                     if err != nil {
                         panic(err)
                     }
@@ -223,7 +215,7 @@ func (xp *XmlParser) Parse() (err error) {
 
             exv, ok := xp.v.(ExtendedXmlVisitor)
             if ok == true {
-                err := exv.HandleComment(&s, xp)
+                err := exv.HandleComment(s, xp)
                 if err != nil {
                     panic(err)
                 }
@@ -234,7 +226,7 @@ func (xp *XmlParser) Parse() (err error) {
 
             exv, ok := xp.v.(ExtendedXmlVisitor)
             if ok == true {
-                err := exv.HandleProcessingInstruction(&e.Target, &instruction, xp)
+                err := exv.HandleProcessingInstruction(e.Target, instruction, xp)
                 if err != nil {
                     panic(err)
                 }
@@ -246,7 +238,7 @@ func (xp *XmlParser) Parse() (err error) {
 
             exv, ok := xp.v.(ExtendedXmlVisitor)
             if ok == true {
-                err := exv.HandleDirective(&s, xp)
+                err := exv.HandleDirective(s, xp)
                 if err != nil {
                     panic(err)
                 }

@@ -18,20 +18,20 @@ type xmlVisitor struct {
     visits [][3]string
 }
 
-func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error {
-    xv.visits = append(xv.visits, [3]string { "start", *tagName, "" })
+func (xv *xmlVisitor) HandleStart(tagName string, attrp map[string]string, xp *XmlParser) error {
+    xv.visits = append(xv.visits, [3]string { "start", tagName, "" })
 
     return nil
 }
 
-func (xv *xmlVisitor) HandleEnd(tagName *string, xp *XmlParser) error {
-    xv.visits = append(xv.visits, [3]string { "stop", *tagName, "" })
+func (xv *xmlVisitor) HandleEnd(tagName string, xp *XmlParser) error {
+    xv.visits = append(xv.visits, [3]string { "stop", tagName, "" })
 
     return nil
 }
 
-func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *XmlParser) error {
-    xv.visits = append(xv.visits, [3]string { "value", *tagName, *value })
+func (xv *xmlVisitor) HandleValue(tagName string, value string, xp *XmlParser) error {
+    xv.visits = append(xv.visits, [3]string { "value", tagName, value })
 
     return nil
 }
