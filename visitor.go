@@ -19,7 +19,7 @@ const (
 
 type SimpleXmlVisitor interface {
     // The content identifier next to the left angle brack.
-    HandleStart(tagName string, attrp map[string]string, xp *XmlParser) error
+    HandleStart(tagName string, attr map[string]string, xp *XmlParser) error
 
     // The content identifier next to the left angle brack.
     HandleEnd(tagName string, xp *XmlParser) error

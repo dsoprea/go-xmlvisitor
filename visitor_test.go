@@ -18,7 +18,7 @@ type xmlVisitor struct {
     visits [][3]string
 }
 
-func (xv *xmlVisitor) HandleStart(tagName string, attrp map[string]string, xp *XmlParser) error {
+func (xv *xmlVisitor) HandleStart(tagName string, attr map[string]string, xp *XmlParser) error {
     xv.visits = append(xv.visits, [3]string { "start", tagName, "" })
 
     return nil
