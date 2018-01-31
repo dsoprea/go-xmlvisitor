@@ -60,14 +60,14 @@ Implement an interface and pass a reader resource along with an instance of your
 
   Default: false
 
-  Trigger on the character data that appears between adjacent open tags or 
+  Trigger on the character data that appears between adjacent open tags or
   adjacent close tags.
 
 - SetDoAutoTrimCharData(value bool)
 
   Default: true
 
-  Remove empty space from the ends of character data. This also affects the 
+  Remove empty space from the ends of character data. This also affects the
   values that we derive from character data (received by HandleValue()).
 
 
@@ -96,81 +96,4 @@ The visitor callbacks have access to the current stack of nodes using `NodeStack
 
 ## Example
 
-```go
-package main
-
-import (
-    "os"
-    "fmt"
-    "strings"
-    "io"
-
-    "github.com/dsoprea/go-xmlvisitor"
-)
-
-type xmlVisitor struct {
-}
-
-func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp *xmlvisitor.XmlParser) error {
-    fmt.Printf("Start: [%s]\n", *tagName)
-
-    return nil
-}
-
-func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error {
-    fmt.Printf("Stop: [%s]\n", *tagName)
-
-    return nil
-}
-
-func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor.XmlParser) error {
-    fmt.Printf("Value: [%s] [%s]\n", *tagName, *value)
-
-    return nil
-}
-
-func newXmlVisitor() (*xmlVisitor) {
-    return &xmlVisitor {}
-}
-
-func getTextReader() io.Reader {
-    s := `<node1>
-    <node2>
-        <node3>node3 value</node3>
-        <node4>node4 value</node4>
-    </node2>
-</node1>`
-
-    r := strings.NewReader(s)
-
-    return r
-}
-
-func main() {
-    r := getTextReader()
-
-    v := newXmlVisitor()
-    p := xmlvisitor.NewXmlParser(r, v)
-
-    err := p.Parse()
-    if err != nil {
-        print("Error: %s\n", err.Error())
-        os.Exit(1)
-    }
-}
-```
-
-Output:
-
-```
-Start: [node1]
-Start: [node2]
-Start: [node3]
-Stop: [node3]
-Value: [node3] [node3 value]
-Start: [node4]
-Stop: [node4]
-Value: [node4] [node4 value]
-Stop: [node2]
-Stop: [node1]
-```
+See tests.

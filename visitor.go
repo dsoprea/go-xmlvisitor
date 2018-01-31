@@ -20,11 +20,11 @@ const (
 type SimpleXmlVisitor interface {
     // The content identifier next to the left angle brack.
     HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error
-    
+
     // The content identifier next to the left angle brack.
     HandleEnd(tagName *string, xp *XmlParser) error
-    
-    // Return the value that was found between two tags not having any child 
+
+    // Return the value that was found between two tags not having any child
     // nodes.
     HandleValue(tagName *string, data *string, xp *XmlParser) error
 }
@@ -32,16 +32,16 @@ type SimpleXmlVisitor interface {
 type ExtendedXmlVisitor interface {
     // The content identifier next to the left angle brack.
     HandleStart(tagName *string, attrp *map[string]string, xp *XmlParser) error
-    
+
     // The content identifier next to the left angle brack.
     HandleEnd(tagName *string, xp *XmlParser) error
 
-    // Return the value that was found between two tags not having any child 
+    // Return the value that was found between two tags not having any child
     // nodes.
     HandleValue(tagName *string, data *string, xp *XmlParser) error
-    
-    // Content that comes before one open/close tag and an adjacent one: either 
-    // the useless whitespace between two open adjacent tags or two close 
+
+    // Content that comes before one open/close tag and an adjacent one: either
+    // the useless whitespace between two open adjacent tags or two close
     // adjacent tags or a tangible/empty value between an open and close tag.
     HandleCharData(data *string, xp *XmlParser) error
 
@@ -49,12 +49,12 @@ type ExtendedXmlVisitor interface {
     //
     // <!-- Comment -->
     HandleComment(comment *string, xp *XmlParser) error
-    
+
     // Example:
     //
     // <?xml version="1.0" encoding="UTF-8"?>
     HandleProcessingInstruction(target *string, instruction *string, xp *XmlParser) error
-    
+
     // Example:
     //
     // <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -70,15 +70,15 @@ type XmlParser struct {
     decoder *xml.Decoder
     ns *Stack
     v XmlVisitor
-    
+
     // The state preceding the last state.
     lastState2 int
-    
+
     // The last state.
     lastState1 int
 
     lastCharData string
-    
+
     doReportMarginCharData bool
     doAutoTrimCharData bool
 }
@@ -155,7 +155,7 @@ func (xp *XmlParser) Parse() (err error) {
         if err != nil {
             break
         }
-  
+
         switch e := token.(type) {
         case xml.StartElement:
             name := e.Name.Local
@@ -195,14 +195,14 @@ func (xp *XmlParser) Parse() (err error) {
         case xml.CharData:
             // The underlying/aliased type is byte[].
             s := string(e)
-            
+
             if xp.doAutoTrimCharData == true {
                 s = strings.TrimSpace(s)
             }
 
-            // We'll be reporting values found between open and close tags in 
-            // the tag-end case. Therefore, this will be exclusively 
-            // responsible for reporting the data between adjacent open tags or 
+            // We'll be reporting values found between open and close tags in
+            // the tag-end case. Therefore, this will be exclusively
+            // responsible for reporting the data between adjacent open tags or
             // adjacent close tags.
             if xp.doReportMarginCharData == true {
                 sxv, ok := xp.v.(ExtendedXmlVisitor)
